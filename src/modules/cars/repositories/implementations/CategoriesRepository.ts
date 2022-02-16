@@ -1,9 +1,9 @@
 /* eslint-disable no-use-before-define */
-import { Category } from "../model/Category";
+import { Category } from "../../model/Category";
 import {
   ICategoriesRepository,
   ICreateCategoryDTO,
-} from "./ICategoriesRepository";
+} from "../ICategoriesRepository";
 
 class CategoriesRepository implements ICategoriesRepository {
   private categories: Category[];
