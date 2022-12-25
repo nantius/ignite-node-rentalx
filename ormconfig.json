@@ -4,10 +4,10 @@
     "host": "localhost",
     "username": "docker",
     "password": "ignite",
+    "database": "rentx",
     "entities": [
         "./src/modules/**/entities/*.ts"
     ],
-    "database": "rentx",
     "migrations": [
         "./src/shared/infra/typeorm/migrations/*.ts"
     ],
