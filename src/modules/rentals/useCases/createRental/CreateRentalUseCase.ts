@@ -1,5 +1,7 @@
 import { inject, injectable } from "tsyringe";
 
+import { IUsersRepository } from "@modules/accounts/repositories/IUsersRepository";
+import { ICarsRepository } from "@modules/cars/repositories/ICarsRepository";
 import { Rental } from "@modules/rentals/infra/typeorm/entities/Rental";
 import { IRentalsRepository } from "@modules/rentals/repositories/IRentalsRepository";
 import { IDateProvider } from "@shared/container/providers/DateProvider/IDateProvider";
@@ -17,7 +19,11 @@ class CreateRentalUseCase {
     @inject("RentalsRepository")
     private rentalsRepository: IRentalsRepository,
     @inject("DayjsDateProvider")
-    private dateProvider: IDateProvider
+    private dateProvider: IDateProvider,
+    @inject("CarsRepository")
+    private carsRepository: ICarsRepository,
+    @inject("UsersRepository")
+    private usersRepository: IUsersRepository
   ) {}
 
   async execute({
@@ -26,12 +32,25 @@ class CreateRentalUseCase {
     expected_return_date,
   }: IRequest): Promise<Rental> {
     const minimumRentalPeriodInHours = 24;
+
+    const car = await this.carsRepository.findById(car_id);
+
+    if (!car) {
+      throw new AppError("Car does not exist");
+    }
+
     const carUnavailable = await this.rentalsRepository.findOpenRentalByCar(
       car_id
     );
 
     if (carUnavailable) {
       throw new AppError("Car is unavailable");
+    }
+
+    const user = await this.usersRepository.findById(user_id);
+
+    if (!user) {
+      throw new AppError("User does not exist");
     }
 
     const rentalOpenToUser = await this.rentalsRepository.findOpenRentalByUser(
@@ -52,11 +71,15 @@ class CreateRentalUseCase {
       throw new AppError("Invalid return time!");
     }
 
-    return this.rentalsRepository.create({
+    const rental = await this.rentalsRepository.create({
       user_id,
       car_id,
       expected_return_date,
     });
+
+    await this.carsRepository.updateAvailable(car_id, false);
+
+    return rental;
   }
 }
 
